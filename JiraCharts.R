@@ -31,7 +31,8 @@ json_list <- function(json_url){
 
 board_url <- "https://aunr-jira-01.ali.local/rest/greenhopper/latest/sprintquery/113/?includeHistoricSprints=true&includeFutureSprints=true"
 board <- json_list_auth(board_url, "jhabib", "November@2015")
-board_sprints <- board$sprints$id
+board_sprints <- data.table(board$sprints$id, board$sprints$name, board$sprints$state)
+setnames(board_sprints, c("sprintid", "sprintname", "sprintstate"))
 # write.csv(board_sprints, file = "ngp_sprints.csv", row.names = FALSE)
 
 
@@ -42,7 +43,7 @@ sprint_issues <- data.table()
 completed <- data.table()
 incompleted <- data.table()
 punted <- data.table()
-for(sprint_id in board_sprints){
+for(sprint_id in board_sprints$sprintid){
   sp_url <- paste("https://aunr-jira-01.ali.local/rest/greenhopper/latest/rapid/charts/sprintreport?rapidViewId=113&sprintId=", 
                   sprint_id, 
                   sep="")
@@ -61,6 +62,7 @@ for(sprint_id in board_sprints){
   sprint_issues <- rbindlist(this_list)
 }
 setnames(sprint_issues, c("sprintid", "issuestatus", "issuekey"))
+setkey(sprint_issues)
 write.csv(sprint_issues, file = "sprint_issues.csv", row.names = FALSE)
 
 
@@ -105,8 +107,12 @@ write.csv(sprint_issue_combined, file = "sprint_issue_combined.csv", row.names =
 
 # Create Sprint Work Column Chart -----------------------------------------
 
-sprint_work_agr <- aggregate(cbind(originalestimate, timespent, currentestimate) ~ sprintid, data = sprint_issue_combined, FUN = function(x){sum(x)/(8*60*60)})
-sprint_chart <- gvisColumnChart(sprint_work_agr, xvar = "sprintid", yvar = c("originalestimate", "timespent", "currentestimate"))
+sprint_work_agr <- aggregate(cbind(originalestimate, timespent, currentestimate) ~ sprintid, data = sprint_issue_combined, FUN = function(x){sum(x)/(60*60)})
+sprint_work_agr <- merge(sprint_work_agr, board_sprints, all = TRUE, by = "sprintid")
+sprint_chart <- gvisColumnChart(tail(sprint_work_agr, n = 20), 
+                                xvar = "sprintname", 
+                                yvar = c("originalestimate", "timespent", "currentestimate"), 
+                                options=list(height="640px"))
 plot(sprint_chart)
 
 # Tests -------------------------------------------------------------------

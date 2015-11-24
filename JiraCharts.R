@@ -7,7 +7,7 @@ library(jsonlite)
 library(plyr)
 library(reshape2)
 library(data.table)
-
+library(googleVis)
 
 # Helpers -----------------------------------------------------------------
 
@@ -101,6 +101,13 @@ setkey(issue_work_estimates)
 
 sprint_issue_combined <- merge(sprint_issues, issue_work_estimates, all = TRUE, by = "issuekey")
 write.csv(sprint_issue_combined, file = "sprint_issue_combined.csv", row.names = FALSE)
+
+
+# Create Sprint Work Column Chart -----------------------------------------
+
+sprint_work_agr <- aggregate(cbind(originalestimate, timespent, currentestimate) ~ sprintid, data = sprint_issue_combined, FUN = function(x){sum(x)/(8*60*60)})
+sprint_chart <- gvisColumnChart(sprint_work_agr, xvar = "sprintid", yvar = c("originalestimate", "timespent", "currentestimate"))
+plot(sprint_chart)
 
 # Tests -------------------------------------------------------------------
 

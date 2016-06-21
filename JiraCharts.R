@@ -30,7 +30,7 @@ json_list <- function(json_url){
 
 
 board_url <- "https://aunr-jira-01.ali.local/rest/greenhopper/latest/sprintquery/113/?includeHistoricSprints=true&includeFutureSprints=true"
-board <- json_list_auth(board_url, "jhabib", "November@2015")
+board <- json_list_auth(board_url, "jhabib", "")
 board_sprints <- data.table(board$sprints$id, board$sprints$name, board$sprints$state)
 setnames(board_sprints, c("sprintid", "sprintname", "sprintstate"))
 # write.csv(board_sprints, file = "ngp_sprints.csv", row.names = FALSE)
